@@ -1,6 +1,6 @@
 {
   "name": "@psousa50/redux-saga-tester",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Helpers for testing redux sagas",
   "files": [
     "dist"
