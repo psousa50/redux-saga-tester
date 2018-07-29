@@ -57,7 +57,7 @@ export const buildSaga = <S, T, A extends string>() => {
       }
     }
 
-    const andArgs = (...args: any[]) => {
+    const withArgs = (...args: any[]) => {
       const o = updateSaga({ ...sagaInfo, args })
       return {
         build: o.build,
@@ -68,7 +68,7 @@ export const buildSaga = <S, T, A extends string>() => {
     const andTask = (task: Task<T>) => {
       const o = updateSaga({ ...sagaInfo, task })
       return {
-        andArgs: o.andArgs,
+        andArgs: o.withArgs,
         build: o.build,
         effect: o.effect,
       }
@@ -91,7 +91,7 @@ export const buildSaga = <S, T, A extends string>() => {
     const build = () => sagaInfo
 
     return {
-      andArgs,
+      withArgs,
       andTask,
       build,
       effect,
