@@ -1,0 +1,35 @@
+{
+  "name": "redux-saga-tester",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "run build",
+    "clean": "rimraf packages/**/dist",
+    "lint": "tslint --project tsconfig.json",
+    "pretest": "npm run lint",
+    "test": "jest --testPathPattern=.+\\.spec\\.ts",
+    "test:watch": "npm test -- --watch",
+    "exec:publish": "exec npm publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:psousa50/redux-saga-tester.git"
+  },
+  "author": "Pedro Sousa <psousa@equalexperts.com>",
+  "license": "MIT",
+  "dependencies": {
+    "redux": "^4.0.0",
+    "redux-saga": "^0.16.0"
+  },
+  "devDependencies": {
+    "@types/enzyme": "^3.1.12",
+    "@types/jest": "^23.3.1",
+    "enzyme": "^3.3.0",
+    "jest": "^23.4.2",
+    "ts-jest": "^23.0.1",
+    "ts-node": "^7.0.0",
+    "tslint": "^5.11.0",
+    "typescript": "^2.9.2"
+  },
+  "private": true
+}
