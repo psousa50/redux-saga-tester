@@ -1,4 +1,4 @@
-import { takeEvery } from "../node_modules/redux-saga/effects"
+import { takeEvery } from "redux-saga/effects"
 import { SagaInfo } from "./buildSaga"
 
 type CheckEqual = (actual: any, expected: any) => boolean
