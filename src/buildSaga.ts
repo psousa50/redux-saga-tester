@@ -1,5 +1,5 @@
 import { Action } from "redux"
-import { Effect } from "redux-saga"
+import { Effect as SagaEffect } from "redux-saga"
 
 type Task<T> = (...args: any[]) => IterableIterator<T>
 
@@ -12,13 +12,34 @@ export type SagaInfo<S, T, A extends string> = {
 }
 
 export type SagaOperation = {
-  effect?: Effect
+  effect?: SagaEffect
   value?: any
   error?: any
 }
 
-export const buildSaga = <S, T, A extends string>() => {
-  const updateSaga = (sagaInfo: SagaInfo<S, T, A>) => {
+type Build = <S, T, A extends string>() => SagaInfo<S, T, A>
+type Returns = (value?: any) => Pick<SagaBuilder, "build" | "effect">
+type Throws = (error?: any) => Pick<SagaBuilder, "build" | "effect">
+type Effect = (effect: SagaEffect) => Pick<SagaBuilder, "build" | "effect" | "returns" | "throws">
+type WithArgs = (...args: any[]) => Pick<SagaBuilder, "build" | "effect">
+type AndTask = <T>(task: Task<T>) => Pick <SagaBuilder, "build" | "effect" | "withArgs">
+type WithAction = <A extends string>(action: Action<A>) => Pick <SagaBuilder, "andTask">
+type ForSaga = <S>(saga: Task<S>) => Pick<SagaBuilder, "withAction">
+
+interface SagaBuilder {
+  forSaga: ForSaga
+  withAction: WithAction
+  andTask: AndTask
+  withArgs: WithArgs
+  effect: Effect
+  returns: Returns
+  throws: Throws
+  build: Build
+}
+
+type BuildSaga = () => Pick<SagaBuilder, "forSaga">
+export const buildSaga: BuildSaga = () => {
+  const updateSaga = <S, T, A extends string>(sagaInfo: SagaInfo<S, T, A>) => {
     const addOperation = (operation: SagaOperation) =>
       updateSaga({ ...sagaInfo, operations: [...sagaInfo.operations, operation] })
 
@@ -31,50 +52,50 @@ export const buildSaga = <S, T, A extends string>() => {
       return updateSaga(newSaga)
     }
 
-    const returns = (value?: any) => {
+    const returns: Returns = value => {
       const o = updataLastOperation({ value })
       return {
         build: o.build,
         effect: o.effect,
-      }
+      } as ReturnType<Returns>
     }
 
-    const throws = (error?: any) => {
+    const throws: Throws = error => {
       const o = updataLastOperation({ error })
       return {
         build: o.build,
         effect: o.effect,
-      }
+      }  as ReturnType<Throws>
     }
 
-    const effect = (effect2: Effect) => {
-      const o = addOperation({ effect: effect2 })
+    const effect: Effect = e => {
+      const o = addOperation({ effect: e })
       return {
         build: o.build,
         effect: o.effect,
         returns: o.returns,
         throws: o.throws,
-      }
+      } as ReturnType<Effect>
     }
 
-    const withArgs = (...args: any[]) => {
+    const withArgs: WithArgs = (...args) => {
       const o = updateSaga({ ...sagaInfo, args })
       return {
         build: o.build,
         effect: o.effect,
-      }
+      } as ReturnType<WithArgs>
     }
 
-    const andTask = (task: Task<T>) => {
+    const andTask: AndTask = task => {
       const o = updateSaga({ ...sagaInfo, task })
       return {
-        andArgs: o.withArgs,
         build: o.build,
         effect: o.effect,
-      }
+        withArgs: o.withArgs,
+      } as ReturnType<AndTask>
     }
 
-    const withAction = (action: Action<A>) => {
+    const withAction: WithAction = action => {
       const o = updateSaga({ ...sagaInfo, action })
       return {
         andTask: o.andTask,
@@ -91,7 +112,6 @@ export const buildSaga = <S, T, A extends string>() => {
     const build = () => sagaInfo
 
     return {
-      withArgs,
       andTask,
       build,
       effect,
@@ -99,6 +119,7 @@ export const buildSaga = <S, T, A extends string>() => {
       returns,
       throws,
       withAction,
+      withArgs,
     }
   }
 

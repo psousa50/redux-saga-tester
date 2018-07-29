@@ -17,7 +17,7 @@ describe("buildSaga", () => {
       .forSaga(saga)
       .withAction(action)
       .andTask(task)
-      .andArgs(arg1, arg2)
+      .withArgs(arg1, arg2)
       .effect(effect1)
       .effect(effect2)
       .returns(value)
