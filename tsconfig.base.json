@@ -1,0 +1,41 @@
+{
+  "awesomeTypescriptLoaderOptions": {
+    "useBabel": false,
+    "useCache": true
+  },
+  "buildOnSave": false,
+  "compileOnSave": true,
+  "compilerOptions": {
+    "declaration": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "isolatedModules": false,
+    "lib": ["es2016.array.include", "es6", "scripthost", "dom"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noImplicitReturns": true,
+    "noLib": false,
+    "noUnusedLocals": true,
+    "outDir": "./temp/",
+    "preserveConstEnums": true,
+    "removeComments": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "strict": true,
+    "stripInternal": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "sourceMap": true,
+    "target": "es5"
+  },
+  "exclude": ["node_modules"],
+  "jest": {
+    "globals": {
+      "ts-jest": {
+        "skipBabel": true
+      }
+    }
+  },
+  "atom": {
+    "rewriteTsconfig": false
+  }
+}
