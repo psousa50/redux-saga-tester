@@ -1,5 +1,5 @@
 {
-  "name": "redux-saga-tester",
+  "name": "@psousa50/redux-saga-tester",
   "version": "1.0.1",
   "description": "Helpers for testing reduz sagas",
   "files": [
@@ -18,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:psousa50/redux-saga-tester.git"
+    "url": "git+ssh://git@github.com/psousa50/redux-saga-tester.git"
   },
   "author": "Pedro Sousa <psousa@equalexperts.com>",
   "license": "MIT",
@@ -35,5 +35,12 @@
     "ts-node": "^7.0.0",
     "tslint": "^5.11.0",
     "typescript": "^2.9.2"
+  },
+  "bugs": {
+    "url": "https://github.com/psousa50/redux-saga-tester/issues"
+  },
+  "homepage": "https://github.com/psousa50/redux-saga-tester#readme",
+  "directories": {
+    "test": "test"
   }
 }

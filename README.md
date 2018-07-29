@@ -5,7 +5,7 @@
 To install the stable version:
 
 ```
-yarn install redux-saga-tester
+yarn install @psousa50/redux-saga-tester
 ```
 
 # Using the extension
