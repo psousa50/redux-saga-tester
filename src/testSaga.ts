@@ -3,30 +3,32 @@ import { SagaDescription } from "./buildSaga"
 
 type CheckEqual = (actual: any, expected: any) => boolean
 export const buildTestSaga = (checkEqual: CheckEqual) => <S, T, A extends string>(
-  sagaInfo: SagaDescription<S, T, A>,
+  sagaDescription: SagaDescription<S, T, A>,
 ) => {
   const checkStarved = () => {
     const starved = taskIiterator.next().done
     checkEqual(starved, true)
   }
 
-  let value: any
+  let returnedValue: any
   let error: any
-  const { task, operations } = sagaInfo
+  const { task, operations } = sagaDescription
 
-  const sagaIterator = sagaInfo.saga!(sagaInfo.action, sagaInfo.task, ...sagaInfo.args)
-  const actionType = sagaInfo.action!.type
+  const sagaIterator = sagaDescription.saga!(sagaDescription.action, sagaDescription.task, ...sagaDescription.args)
+  const actionType = sagaDescription.action!.type
   const sagaType = (sagaIterator.next().value as any).FORK.args[0]
-  const expectedType = takeEvery(actionType, sagaInfo.task!, sagaInfo.args).FORK.args[0]
+  const expectedType = takeEvery(actionType, sagaDescription.task!, sagaDescription.args).FORK.args[0]
   checkEqual(sagaType, expectedType)
 
-  const taskIiterator = task!(...sagaInfo.args, sagaInfo.action)
+  const taskIiterator = task!(...sagaDescription.args, sagaDescription.action)
   operations.forEach(operation => {
     if (error) {
-      checkEqual(taskIiterator.throw!(error).value, operation.effect)
+      const value = taskIiterator.throw!(error)
+      checkEqual(value.value, operation.effect)
     } else {
-      checkEqual(taskIiterator.next(value).value, operation.effect)
-      value = operation.value
+      const value = taskIiterator.next(returnedValue)
+      checkEqual(value.value, operation.effect)
+      returnedValue = operation.returnedValue
       error = operation.error
     }
   })

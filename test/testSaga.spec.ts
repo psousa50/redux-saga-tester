@@ -59,7 +59,7 @@ describe("testSaga", () => {
     const arg1 = () => undefined as any
 
     it("arg1 returns true", () => {
-      const sagaInfo = buildSagaDescription()
+      const sagaDescription = buildSagaDescription()
         .forSaga(correctSaga)
         .withAction(subscribedAction)
         .andTask(correctSagaTask)
@@ -70,11 +70,11 @@ describe("testSaga", () => {
         .build()
 
       const testSaga = buildTestSaga(checkEqual)
-      testSaga(sagaInfo)
+      testSaga(sagaDescription)
     })
 
     it("arg1 returns false", () => {
-      const sagaInfo = buildSagaDescription()
+      const sagaDescription = buildSagaDescription()
         .forSaga(correctSaga)
         .withAction(subscribedAction)
         .andTask(correctSagaTask)
@@ -85,11 +85,11 @@ describe("testSaga", () => {
         .build()
 
       const testSaga = buildTestSaga(checkEqual)
-      testSaga(sagaInfo)
+      testSaga(sagaDescription)
     })
 
     it("arg1 throws an error", () => {
-      const sagaInfo = buildSagaDescription()
+      const sagaDescription = buildSagaDescription()
         .forSaga(correctSaga)
         .withAction(subscribedAction)
         .andTask(correctSagaTask)
@@ -100,7 +100,7 @@ describe("testSaga", () => {
         .build()
 
       const testSaga = buildTestSaga(checkEqual)
-      testSaga(sagaInfo)
+      testSaga(sagaDescription)
     })
   })
 
@@ -116,7 +116,7 @@ describe("testSaga", () => {
       }
 
       const arg1 = () => true
-      const sagaInfo = buildSagaDescription()
+      const sagaDescription = buildSagaDescription()
         .forSaga(incorrectSagaType)
         .withAction(subscribedAction)
         .andTask(correctSagaTask)
@@ -127,7 +127,7 @@ describe("testSaga", () => {
         .build()
 
       const testSaga = buildTestSaga(checkEqual)
-      testSaga(sagaInfo)
+      testSaga(sagaDescription)
     })
 
     it("saga is incorrectly implemented", () => {
@@ -141,7 +141,7 @@ describe("testSaga", () => {
       }
 
       const arg1 = () => true
-      const sagaInfo = buildSagaDescription()
+      const sagaDescription = buildSagaDescription()
         .forSaga(incorrectSaga)
         .withAction(subscribedAction)
         .andTask(incorrectSagaTask)
@@ -152,7 +152,7 @@ describe("testSaga", () => {
         .build()
 
       const testSaga = buildTestSaga(checkEqual)
-      testSaga(sagaInfo)
+      testSaga(sagaDescription)
     })
 
     it("saga is not starved", () => {
@@ -166,7 +166,7 @@ describe("testSaga", () => {
       }
 
       const arg1 = () => true
-      const sagaInfo = buildSagaDescription()
+      const sagaDescription = buildSagaDescription()
         .forSaga(correctSaga)
         .withAction(subscribedAction)
         .andTask(correctSagaTask)
@@ -176,7 +176,7 @@ describe("testSaga", () => {
         .build()
 
       const testSaga = buildTestSaga(checkEqual)
-      testSaga(sagaInfo)
+      testSaga(sagaDescription)
     })
   })
 })

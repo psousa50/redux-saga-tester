@@ -10,17 +10,17 @@ describe("buildSaga", () => {
     const effect1 = { effect1: true } as any
     const effect2 = { effect2: true } as any
     const effect3 = { effect3: true } as any
-    const value = { value: true } as any
+    const returnedValue = { returnedValue: true } as any
     const error = { error: true } as any
 
-    const sagaInfo = buildSagaDescription()
+    const sagaDescription = buildSagaDescription()
       .forSaga(saga)
       .withAction(action)
       .andTask(task)
       .withArgs(arg1, arg2)
       .effect(effect1)
       .effect(effect2)
-      .returns(value)
+      .returns(returnedValue)
       .effect(effect3)
       .throws(error)
       .build()
@@ -31,7 +31,7 @@ describe("buildSaga", () => {
       },
       {
         effect: effect2,
-        value,
+        returnedValue,
       },
       {
         effect: effect3,
@@ -47,6 +47,6 @@ describe("buildSaga", () => {
       task,
     }
 
-    expect(sagaInfo).toEqual(expectedSaga)
+    expect(sagaDescription).toEqual(expectedSaga)
   })
 })
