@@ -3,7 +3,7 @@ import { Effect as SagaEffect } from "redux-saga"
 
 type Task<T> = (...args: any[]) => IterableIterator<T>
 
-export type SagaInfo<S, T, A extends string> = {
+export type SagaDescription<S, T, A extends string> = {
   saga?: Task<S>
   action?: Action<A>
   task?: Task<T>
@@ -17,14 +17,14 @@ export type SagaOperation = {
   error?: any
 }
 
-type Build = <S, T, A extends string>() => SagaInfo<S, T, A>
+type ForSaga = <S>(saga: Task<S>) => Pick<SagaBuilder, "withAction">
+type WithAction = <A extends string>(action: Action<A>) => Pick<SagaBuilder, "andTask">
+type AndTask = <T>(task: Task<T>) => Pick<SagaBuilder, "build" | "effect" | "withArgs">
+type WithArgs = (...args: any[]) => Pick<SagaBuilder, "build" | "effect">
+type Effect = (effect: SagaEffect) => Pick<SagaBuilder, "build" | "effect" | "returns" | "throws">
 type Returns = (value?: any) => Pick<SagaBuilder, "build" | "effect">
 type Throws = (error?: any) => Pick<SagaBuilder, "build" | "effect">
-type Effect = (effect: SagaEffect) => Pick<SagaBuilder, "build" | "effect" | "returns" | "throws">
-type WithArgs = (...args: any[]) => Pick<SagaBuilder, "build" | "effect">
-type AndTask = <T>(task: Task<T>) => Pick <SagaBuilder, "build" | "effect" | "withArgs">
-type WithAction = <A extends string>(action: Action<A>) => Pick <SagaBuilder, "andTask">
-type ForSaga = <S>(saga: Task<S>) => Pick<SagaBuilder, "withAction">
+type Build = <S, T, A extends string>() => SagaDescription<S, T, A>
 
 interface SagaBuilder {
   forSaga: ForSaga
@@ -37,11 +37,11 @@ interface SagaBuilder {
   build: Build
 }
 
-type BuildSaga = () => Pick<SagaBuilder, "forSaga">
-export const buildSaga: BuildSaga = () => {
-  const updateSaga = <S, T, A extends string>(sagaInfo: SagaInfo<S, T, A>) => {
+type BuildSagaDescription = () => Pick<SagaBuilder, "forSaga">
+export const buildSagaDescription: BuildSagaDescription = () => {
+  const updateSagaDescription = <S, T, A extends string>(sagaInfo: SagaDescription<S, T, A>) => {
     const addOperation = (operation: SagaOperation) =>
-      updateSaga({ ...sagaInfo, operations: [...sagaInfo.operations, operation] })
+      updateSagaDescription({ ...sagaInfo, operations: [...sagaInfo.operations, operation] })
 
     const updataLastOperation = (operation: SagaOperation) => {
       const last = sagaInfo.operations[sagaInfo.operations.length - 1]
@@ -49,7 +49,7 @@ export const buildSaga: BuildSaga = () => {
         ...sagaInfo,
         operations: [...sagaInfo.operations.slice(0, -1), { ...last, ...operation }],
       }
-      return updateSaga(newSaga)
+      return updateSagaDescription(newSaga)
     }
 
     const returns: Returns = value => {
@@ -65,7 +65,7 @@ export const buildSaga: BuildSaga = () => {
       return {
         build: o.build,
         effect: o.effect,
-      }  as ReturnType<Throws>
+      } as ReturnType<Throws>
     }
 
     const effect: Effect = e => {
@@ -79,7 +79,7 @@ export const buildSaga: BuildSaga = () => {
     }
 
     const withArgs: WithArgs = (...args) => {
-      const o = updateSaga({ ...sagaInfo, args })
+      const o = updateSagaDescription({ ...sagaInfo, args })
       return {
         build: o.build,
         effect: o.effect,
@@ -87,7 +87,7 @@ export const buildSaga: BuildSaga = () => {
     }
 
     const andTask: AndTask = task => {
-      const o = updateSaga({ ...sagaInfo, task })
+      const o = updateSagaDescription({ ...sagaInfo, task })
       return {
         build: o.build,
         effect: o.effect,
@@ -96,14 +96,14 @@ export const buildSaga: BuildSaga = () => {
     }
 
     const withAction: WithAction = action => {
-      const o = updateSaga({ ...sagaInfo, action })
+      const o = updateSagaDescription({ ...sagaInfo, action })
       return {
         andTask: o.andTask,
       }
     }
 
     const forSaga = (saga: Task<S>) => {
-      const o = updateSaga({ ...sagaInfo, saga })
+      const o = updateSagaDescription({ ...sagaInfo, saga })
       return {
         withAction: o.withAction,
       }
@@ -126,6 +126,6 @@ export const buildSaga: BuildSaga = () => {
   const initialSaga = { args: [], operations: [] }
 
   return {
-    forSaga: updateSaga(initialSaga).forSaga,
+    forSaga: updateSagaDescription(initialSaga).forSaga,
   }
 }

@@ -1,9 +1,10 @@
 import { takeEvery } from "redux-saga/effects"
-import { SagaInfo } from "./buildSaga"
+import { SagaDescription } from "./buildSaga"
 
 type CheckEqual = (actual: any, expected: any) => boolean
-export const buildTestSaga = (checkEqual: CheckEqual) => <S, T, A extends string>(sagaInfo: SagaInfo<S, T, A>) => {
-
+export const buildTestSaga = (checkEqual: CheckEqual) => <S, T, A extends string>(
+  sagaInfo: SagaDescription<S, T, A>,
+) => {
   const checkStarved = () => {
     const starved = taskIiterator.next().done
     checkEqual(starved, true)

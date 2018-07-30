@@ -1,6 +1,6 @@
 import { Action } from "redux"
 import { call, CallEffect, ForkEffect, put, PutEffect, takeEvery } from "redux-saga/effects"
-import { buildSaga } from "../src/buildSaga"
+import { buildSagaDescription } from "../src/buildSaga"
 import { buildTestSaga } from "../src/testSaga"
 
 describe("testSaga", () => {
@@ -59,7 +59,7 @@ describe("testSaga", () => {
     const arg1 = () => undefined as any
 
     it("arg1 returns true", () => {
-      const sagaInfo = buildSaga()
+      const sagaInfo = buildSagaDescription()
         .forSaga(correctSaga)
         .withAction(subscribedAction)
         .andTask(correctSagaTask)
@@ -74,7 +74,7 @@ describe("testSaga", () => {
     })
 
     it("arg1 returns false", () => {
-      const sagaInfo = buildSaga()
+      const sagaInfo = buildSagaDescription()
         .forSaga(correctSaga)
         .withAction(subscribedAction)
         .andTask(correctSagaTask)
@@ -89,7 +89,7 @@ describe("testSaga", () => {
     })
 
     it("arg1 throws an error", () => {
-      const sagaInfo = buildSaga()
+      const sagaInfo = buildSagaDescription()
         .forSaga(correctSaga)
         .withAction(subscribedAction)
         .andTask(correctSagaTask)
@@ -116,7 +116,7 @@ describe("testSaga", () => {
       }
 
       const arg1 = () => true
-      const sagaInfo = buildSaga()
+      const sagaInfo = buildSagaDescription()
         .forSaga(incorrectSagaType)
         .withAction(subscribedAction)
         .andTask(correctSagaTask)
@@ -141,7 +141,7 @@ describe("testSaga", () => {
       }
 
       const arg1 = () => true
-      const sagaInfo = buildSaga()
+      const sagaInfo = buildSagaDescription()
         .forSaga(incorrectSaga)
         .withAction(subscribedAction)
         .andTask(incorrectSagaTask)
@@ -166,7 +166,7 @@ describe("testSaga", () => {
       }
 
       const arg1 = () => true
-      const sagaInfo = buildSaga()
+      const sagaInfo = buildSagaDescription()
         .forSaga(correctSaga)
         .withAction(subscribedAction)
         .andTask(correctSagaTask)

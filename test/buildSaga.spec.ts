@@ -1,4 +1,4 @@
-import { buildSaga } from "../src/buildSaga"
+import { buildSagaDescription } from "../src/buildSaga"
 
 describe("buildSaga", () => {
   it("builds a saga", () => {
@@ -13,7 +13,7 @@ describe("buildSaga", () => {
     const value = { value: true } as any
     const error = { error: true } as any
 
-    const sagaInfo = buildSaga()
+    const sagaInfo = buildSagaDescription()
       .forSaga(saga)
       .withAction(action)
       .andTask(task)
