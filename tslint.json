@@ -3,6 +3,7 @@
       "tslint:recommended"
     ],
     "rules": {
+      "max-line-length": 150,
       "arrow-parens": [false],
       "no-console": [false],
       "no-default-export": true,

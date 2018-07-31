@@ -13,8 +13,9 @@
     "lint": "tslint src/**/*.ts test/**/*.ts",
     "prepare": "npm run build",
     "pretest": "npm run lint",
-    "test": "jest --coverage --testPathPattern=.+\\.spec\\.ts",
-    "test:watch": "npm test -- --watch"
+    "jest": "jest --coverage --testPathPattern=.+\\.spec\\.ts",
+    "test": "npm run jest",    
+    "test:watch": "npm run jest -- --watch"
   },
   "repository": {
     "type": "git",
