@@ -1,6 +1,6 @@
 {
   "name": "@psousa50/redux-saga-tester",
-  "version": "1.0.6",
+  "version": "1.1.1",
   "description": "Helpers for testing redux sagas",
   "files": [
     "dist"
@@ -14,7 +14,7 @@
     "prepare": "npm run build",
     "pretest": "npm run lint",
     "jest": "jest --coverage --testPathPattern=.+\\.spec\\.ts",
-    "test": "npm run jest",    
+    "test": "npm run jest",
     "test:watch": "npm run jest -- --watch"
   },
   "repository": {
