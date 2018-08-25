@@ -1,5 +1,5 @@
 import { Action } from "redux"
-import { call, CallEffect, ForkEffect, put, PutEffect, takeEvery } from "redux-saga/effects"
+import { call, CallEffect, ForkEffect, put, PutEffect, takeEvery, takeLatest } from "redux-saga/effects"
 import { buildSagaScenario } from "../src"
 
 describe("buildSagaScenario.build()", () => {
@@ -58,16 +58,20 @@ describe("buildSagaScenario.build()", () => {
   it("builds a saga scenario output", () => {
     const sagaScenario = getSagaScenario()
 
+    const sagaOutput = sagaScenario.output()
+
     const forkEffect = {
+      ["@@redux-saga/IO"]: true,
       FORK: {
-        args: [action.type],
+        args: [action.type, task, arg1, arg2],
+        context: null,
+        fn: (sagaOutput.effects[0] as any).FORK.fn,
       },
     }
     const expectedScenarioOutput = {
       effects: [forkEffect, effect1, effect2, effect3],
       starved: true,
     }
-
     expect(sagaScenario.output()).toEqual(expectedScenarioOutput)
   })
 })
@@ -84,7 +88,7 @@ describe("buildSagaScenario.run()", () => {
   const allAction = { type: "all-type", payload: 20 }
   const errorAction = { type: "error-type", payload: 30 }
 
-  function* correctSagaTask(arg1: () => boolean, action: SagaAction): IterableIterator<SagaEffects> {
+  function* testSagaTask(arg1: () => boolean, action: SagaAction): IterableIterator<SagaEffects> {
     try {
       const result: boolean = yield call(arg1, action.payload)
       if (result) {
@@ -98,48 +102,29 @@ describe("buildSagaScenario.run()", () => {
     }
   }
 
-  // function* incorrectSagaTask(arg1: () => boolean, action: SagaAction): IterableIterator<SagaEffects> {
-  //   try {
-  //     const result: boolean = yield call(arg1, action.payload)
-  //     if (!result) {
-  //       yield put(okAction)
-  //     } else {
-  //       yield put(failAction)
-  //     }
-  //   } catch (error) {
-  //     yield put(errorAction)
-  //   }
-  // }
-
-  function* correctSaga(arg1: () => boolean): IterableIterator<ForkEffect> {
-    yield takeEvery(subscribedAction.type, correctSagaTask, arg1)
+  function* testSaga(arg1: () => boolean): IterableIterator<ForkEffect> {
+    yield takeEvery(subscribedAction.type, testSagaTask, arg1)
   }
 
-  // function* incorrectSaga(arg1: () => boolean): IterableIterator<ForkEffect> {
-  //   yield takeEvery(subscribedAction.type, incorrectSagaTask, arg1)
-  // }
-
-  // function* incorrectSagaType(arg1: () => boolean): IterableIterator<ForkEffect> {
-  //   yield takeEvery("WrongType", incorrectSagaTask, arg1)
-  // }
+  const getSagaScenario = () =>
+    buildSagaScenario()
+      .forSaga(testSaga)
+      .taking(takeEvery)
+      .withAction(subscribedAction)
+      .andTask(testSagaTask)
+      .withArgs(arg)
+      .generateEffect(call(arg, subscribedAction.payload))
 
   describe("verifies a correct saga", () => {
-    const getSagaScenario = () =>
-      buildSagaScenario()
-        .forSaga(correctSaga)
-        .taking(takeEvery)
-        .withAction(subscribedAction)
-        .andTask(correctSagaTask)
-        .withArgs(arg)
-        .generateEffect(call(arg, subscribedAction.payload))
-
     it("when call returns true", () => {
       const sagaScenario = getSagaScenario()
         .returns(true)
         .generateEffect(put(okAction))
         .generateEffect(put(allAction))
 
-      expect(sagaScenario.run()).toEqual(sagaScenario.output())
+      const run = sagaScenario.run()
+      const output = sagaScenario.output()
+      expect(run).toEqual(output)
     })
 
     it("when call returns false", () => {
@@ -151,7 +136,7 @@ describe("buildSagaScenario.run()", () => {
       expect(sagaScenario.run()).toEqual(sagaScenario.output())
     })
 
-    it("when call that throwss an exception", () => {
+    it("when call throws an exception", () => {
       const errorMessage = "some-error"
       const sagaScenario = getSagaScenario()
         .throws(new Error(errorMessage))
@@ -163,13 +148,7 @@ describe("buildSagaScenario.run()", () => {
 
   describe("detected an incorrect saga", () => {
     it("when not starved", () => {
-      const sagaScenario = buildSagaScenario()
-        .forSaga(correctSaga)
-        .taking(takeEvery)
-        .withAction(subscribedAction)
-        .andTask(correctSagaTask)
-        .withArgs(arg)
-        .generateEffect(call(arg, subscribedAction.payload))
+      const sagaScenario = getSagaScenario()
         .returns(true)
         .generateEffect(put(okAction))
 
