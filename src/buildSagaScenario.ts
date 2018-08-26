@@ -12,6 +12,7 @@ export type SagaScenario<S, T, A extends string> = {
   task?: Task<T>
   args: any[]
   steps: SagaStep[]
+  starved?: boolean
 }
 
 export type SagaStep = {
@@ -25,15 +26,19 @@ export type SagaOutput = {
   starved: boolean
 }
 
-type BuildSagaScenario = () => Pick<SagaBuilder, "forSaga">
-type ForSaga = <S extends ReduxSagaEffect>(saga: Task<S>) => Pick<SagaBuilder, "taking">
-type Taking = (forkEffect: ForkEffectHelper) => Pick<SagaBuilder, "withAction">
-type WithAction = <A extends string>(action: Action<A>) => Pick<SagaBuilder, "andTask">
-type AndTask = <T extends ReduxSagaEffect>(task: Task<T>) => Pick<SagaBuilder, "generateEffect" | "withArgs">
-type WithArgs = (...args: any[]) => Pick<SagaBuilder, "generateEffect">
-type GenerateEffect = (generateEffect: ReduxSagaEffect) => Pick<SagaBuilder, "run" | "build" | "output" | "generateEffect" | "returns" | "throws">
-type Returns = (returnedValue?: any) => Pick<SagaBuilder, "run" | "build" | "output" | "generateEffect">
-type Throws = (error?: any) => Pick<SagaBuilder, "run" | "build" | "output" | "generateEffect">
+type EffectOperations = "build" | "generateEffect" | "output" | "run" | "starved"
+type PickOp<T extends keyof SagaBuilder> = Pick<SagaBuilder, T>
+
+type BuildSagaScenario = () => PickOp<"forSaga">
+type ForSaga = <S extends ReduxSagaEffect>(saga: Task<S>) => PickOp<"taking">
+type Taking = (forkEffect: ForkEffectHelper) => PickOp<"withAction">
+type WithAction = <A extends string>(action: Action<A>) => PickOp<"andTask">
+type AndTask = <T extends ReduxSagaEffect>(task: Task<T>) => PickOp<"generateEffect" | "withArgs">
+type WithArgs = (...args: any[]) => PickOp<EffectOperations>
+type GenerateEffect = (generateEffect: ReduxSagaEffect) => PickOp<EffectOperations | "returns" | "throws">
+type Returns = (returnedValue?: any) => PickOp<EffectOperations>
+type Throws = (error?: any) => PickOp<EffectOperations>
+type Starved = (starved?: boolean) => PickOp<EffectOperations>
 type Build = <S extends ReduxSagaEffect, T extends ReduxSagaEffect, A extends string>() => SagaScenario<S, T, A>
 type Run = <S extends ReduxSagaEffect, T extends ReduxSagaEffect, A extends string>() => SagaOutput
 type Output = <S extends ReduxSagaEffect, T extends ReduxSagaEffect, A extends string>() => SagaOutput
@@ -47,10 +52,19 @@ interface SagaBuilder {
   generateEffect: GenerateEffect
   returns: Returns
   throws: Throws
+  starved: Starved
   build: Build
   run: Run
   output: Output
 }
+
+const efectOperations = (s: SagaBuilder) => ({
+  build: s.build,
+  generateEffect: s.generateEffect,
+  output: s.output,
+  run: s.run,
+  starved: s.starved,
+})
 
 export const buildSagaScenario: BuildSagaScenario = () => {
   const updateSagaScenario = <S extends ReduxSagaEffect, T extends ReduxSagaEffect, A extends string>(sagaScenario: SagaScenario<S, T, A>) => {
@@ -65,39 +79,24 @@ export const buildSagaScenario: BuildSagaScenario = () => {
       return updateSagaScenario(newSaga)
     }
 
-    const returns: Returns = returnedValue => {
-      const o = updataLastStep({ returnedValue })
+    const forSaga: ForSaga = saga => {
+      const o = updateSagaScenario({ ...sagaScenario, saga })
       return {
-        generateEffect: o.generateEffect,
-      } as ReturnType<Returns>
+        taking: o.taking,
+      }
     }
 
-    const throws: Throws = error => {
-      const o = updataLastStep({ error })
+    const taking: Taking = forkEffect => {
+      const o = updateSagaScenario({ ...sagaScenario, forkEffect })
       return {
-        build: o.build,
-        generateEffect: o.generateEffect,
-        output: o.output,
-        run: o.run,
-      } as ReturnType<Throws>
+        withAction: o.withAction,
+      }
     }
 
-    const generateEffect: GenerateEffect = effect => {
-      const o = addStep({ effect })
+    const withAction: WithAction = action => {
+      const o = updateSagaScenario({ ...sagaScenario, action })
       return {
-        build: o.build,
-        generateEffect: o.generateEffect,
-        output: o.output,
-        returns: o.returns,
-        run: o.run,
-        throws: o.throws,
-      } as ReturnType<GenerateEffect>
-    }
-
-    const withArgs: WithArgs = (...args) => {
-      const o = updateSagaScenario({ ...sagaScenario, args })
-      return {
-        generateEffect: o.generateEffect,
+        andTask: o.andTask,
       }
     }
 
@@ -109,24 +108,40 @@ export const buildSagaScenario: BuildSagaScenario = () => {
       }
     }
 
-    const withAction: WithAction = action => {
-      const o = updateSagaScenario({ ...sagaScenario, action })
+    const withArgs: WithArgs = (...args) => {
+      const o = updateSagaScenario({ ...sagaScenario, args })
       return {
-        andTask: o.andTask,
+        ...efectOperations(o),
       }
     }
 
-    const taking: Taking = forkEffect => {
-      const o = updateSagaScenario({ ...sagaScenario, forkEffect })
+    const generateEffect: GenerateEffect = effect => {
+      const o = addStep({ effect })
       return {
-        withAction: o.withAction,
+        ...efectOperations(addStep({ effect })),
+        returns: o.returns,
+        throws: o.throws,
       }
     }
 
-    const forSaga: ForSaga = saga => {
-      const o = updateSagaScenario({ ...sagaScenario, saga })
+    const returns: Returns = returnedValue => {
+      const o = updataLastStep({ returnedValue })
       return {
-        taking: o.taking,
+        ...efectOperations(o),
+      }
+    }
+
+    const throws: Throws = error => {
+      const o = updataLastStep({ error })
+      return {
+        ...efectOperations(o),
+      }
+    }
+
+    const starved: Starved = isStarved => {
+      const o = updateSagaScenario({ ...sagaScenario, starved: isStarved })
+      return {
+        ...efectOperations(o),
       }
     }
 
@@ -141,9 +156,10 @@ export const buildSagaScenario: BuildSagaScenario = () => {
           args: [...forkEffect.FORK.args, ...sagaScenario.args],
         },
       }
+
       return {
         effects: [forkEffectWithArgs, ...sagaScenario.steps.map(s => s.effect!)],
-        starved: true,
+        starved: sagaScenario.starved === undefined ? true : sagaScenario.starved,
       }
     }
 
@@ -155,12 +171,12 @@ export const buildSagaScenario: BuildSagaScenario = () => {
       const effects: ReduxSagaEffect[] = []
 
       const sagaIterator = sagaScenario.saga!(...args)
-      const take = sagaIterator.next() as any
+      const take = sagaIterator.next()
       effects.push(take.value)
 
       const taskIiterator = task!(...args, action)
       steps.forEach(step => {
-        const value = error ? taskIiterator.throw!(error) : (taskIiterator.next(returnedValue) as any)
+        const value = error ? taskIiterator.throw!(error) : taskIiterator.next(returnedValue)
         effects.push(value.value)
         returnedValue = step.returnedValue
         error = step.error
@@ -177,11 +193,12 @@ export const buildSagaScenario: BuildSagaScenario = () => {
       output,
       returns,
       run,
+      starved,
       taking,
       throws,
       withAction,
       withArgs,
-    }
+    } as SagaBuilder
   }
 
   const initialSaga = { args: [], steps: [] }
