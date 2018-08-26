@@ -1,6 +1,6 @@
 import { Action } from "redux"
 import { Effect as ReduxSagaEffect } from "redux-saga"
-import { takeEvery, takeLatest } from "redux-saga/effects"
+import { ForkEffect, takeEvery, takeLatest } from "redux-saga/effects"
 
 type Task<T> = (...args: any[]) => IterableIterator<T>
 type ForkEffectHelper = typeof takeEvery | typeof takeLatest
@@ -30,9 +30,9 @@ type EffectOperations = "build" | "generateEffect" | "output" | "run" | "starved
 type PickOp<T extends keyof SagaBuilder> = Pick<SagaBuilder, T>
 
 type BuildSagaScenario = () => PickOp<"forSaga">
-type ForSaga = <S extends ReduxSagaEffect>(saga: Task<S>) => PickOp<"taking">
+type ForSaga = <S extends ReduxSagaEffect>(saga: Task<S>) => PickOp<EffectOperations | "taking" | "withAction">
 type Taking = (forkEffect: ForkEffectHelper) => PickOp<"withAction">
-type WithAction = <A extends string>(action: Action<A>) => PickOp<"andTask">
+type WithAction = <A extends string>(action: Action<A>) => PickOp<"andTask" | "withArgs">
 type AndTask = <T extends ReduxSagaEffect>(task: Task<T>) => PickOp<"generateEffect" | "withArgs">
 type WithArgs = (...args: any[]) => PickOp<EffectOperations>
 type GenerateEffect = (generateEffect: ReduxSagaEffect) => PickOp<EffectOperations | "returns" | "throws">
@@ -82,7 +82,9 @@ export const buildSagaScenario: BuildSagaScenario = () => {
     const forSaga: ForSaga = saga => {
       const o = updateSagaScenario({ ...sagaScenario, saga })
       return {
+        ...efectOperations(o),
         taking: o.taking,
+        withAction: o.withAction,
       }
     }
 
@@ -97,6 +99,7 @@ export const buildSagaScenario: BuildSagaScenario = () => {
       const o = updateSagaScenario({ ...sagaScenario, action })
       return {
         andTask: o.andTask,
+        withArgs: o.withArgs,
       }
     }
 
@@ -148,17 +151,23 @@ export const buildSagaScenario: BuildSagaScenario = () => {
     const build = () => sagaScenario
 
     const output: Output = () => {
-      const forkEffect = sagaScenario.forkEffect!(sagaScenario.action!.type, sagaScenario.task!)
-      const forkEffectWithArgs = {
-        ...forkEffect,
-        FORK: {
-          ...forkEffect.FORK,
-          args: [...forkEffect.FORK.args, ...sagaScenario.args],
-        },
+      const getForkEffect = () => {
+        if (!sagaScenario.forkEffect) {
+          return []
+        } else {
+          const forkEffect = sagaScenario.forkEffect!(sagaScenario.action!.type, sagaScenario.task!)
+          return [{
+            ...forkEffect,
+            FORK: {
+              ...forkEffect.FORK,
+              args: [...forkEffect.FORK.args, ...sagaScenario.args],
+            },
+          }]
+        }
       }
 
       return {
-        effects: [forkEffectWithArgs, ...sagaScenario.steps.map(s => s.effect!)],
+        effects: [...getForkEffect(), ...sagaScenario.steps.map(s => s.effect!)],
         starved: sagaScenario.starved === undefined ? true : sagaScenario.starved,
       }
     }
@@ -174,8 +183,10 @@ export const buildSagaScenario: BuildSagaScenario = () => {
       const take = sagaIterator.next()
       effects.push(take.value)
 
-      const taskIiterator = task!(...args, action)
-      steps.forEach(step => {
+      const taskToIterate = task ? task : (take.value as ForkEffect).FORK.args[1] as Task<T>
+      const stepstoIterate = task ? steps : steps.slice(1)
+      const taskIiterator = taskToIterate(...args, action)
+      stepstoIterate.forEach(step => {
         const value = error ? taskIiterator.throw!(error) : taskIiterator.next(returnedValue)
         effects.push(value.value)
         returnedValue = step.returnedValue

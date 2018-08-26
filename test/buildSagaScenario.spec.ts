@@ -17,10 +17,9 @@ describe("buildSagaScenario.build()", () => {
   const getSagaScenario = () =>
     buildSagaScenario()
       .forSaga(saga)
-      .taking(takeEvery)
       .withAction(action)
-      .andTask(task)
       .withArgs(arg1, arg2)
+      .generateEffect(takeEvery(action.type, task, arg1, arg2))
       .generateEffect(effect1)
       .generateEffect(effect2)
       .returns(returnedValue)
@@ -31,6 +30,9 @@ describe("buildSagaScenario.build()", () => {
     const sagaScenario = getSagaScenario()
 
     const expectedSteps = [
+      {
+        effect: takeEvery(action.type, task, arg1, arg2),
+      },
       {
         effect: effect1,
       },
@@ -47,10 +49,8 @@ describe("buildSagaScenario.build()", () => {
     const expectedSagaScenario = {
       action,
       args: [arg1, arg2],
-      forkEffect: takeEvery,
       saga,
       steps: expectedSteps,
-      task,
     }
     expect(sagaScenario.build()).toEqual(expectedSagaScenario)
   })
@@ -82,13 +82,12 @@ describe("buildSagaScenario.run()", () => {
   }
   type SagaEffects = CallEffect | PutEffect<SagaAction>
   const subscribedAction: SagaAction = { type: "some-type", payload: 1 }
-  const arg1 = () => ({ arg1: true })
-  const buildArg2 = (f: () => number) => () => ({ type: "t", payload: f() } as SagaAction)
+  const arg1 = () => ({ arg1: true } as any)
+  const buildArg2 = (f: () => number) => () => ({ type: "arg2", payload: f() } as SagaAction)
   const arg2 = buildArg2(() => 3)
+
   const okAction = { type: "ok-type", payload: 2 }
   const failAction = { type: "fail-type", payload: 10 }
-  const errorAction = { type: "error-type", payload: 30 }
-
   function* testSagaTask(arg11: () => boolean, arg22: () => SagaAction, action: SagaAction): IterableIterator<SagaEffects> {
     try {
       const result: boolean = yield call(arg11, action.payload)
@@ -110,10 +109,9 @@ describe("buildSagaScenario.run()", () => {
   const getSagaScenario = () =>
     buildSagaScenario()
       .forSaga(testSaga)
-      .taking(takeEvery)
       .withAction(subscribedAction)
-      .andTask(testSagaTask)
       .withArgs(arg1, arg2)
+      .generateEffect(takeEvery(subscribedAction.type, testSagaTask, arg1, arg2))
       .generateEffect(call(arg1, subscribedAction.payload))
 
   describe("verifies a correct saga", () => {
