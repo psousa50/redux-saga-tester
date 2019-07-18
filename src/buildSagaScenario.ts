@@ -1,9 +1,8 @@
 import { Action } from "redux"
-import { Effect as ReduxSagaEffect } from "redux-saga"
-import { ForkEffect, takeEvery, takeLatest } from "redux-saga/effects"
+import { Effect as ReduxSagaEffect, effectTypes, ForkEffect, takeEvery, takeLatest, takeLeading } from "redux-saga/effects"
 
 type Task<T> = (...args: any[]) => IterableIterator<T>
-type ForkEffectHelper = typeof takeEvery | typeof takeLatest
+type ForkEffectHelper = typeof takeEvery | typeof takeLatest | typeof takeLeading
 
 export type SagaScenario<S, T, A extends string> = {
   saga?: Task<S>
@@ -156,13 +155,15 @@ export const buildSagaScenario: BuildSagaScenario = () => {
           return []
         } else {
           const forkEffect = sagaScenario.forkEffect!(sagaScenario.action!.type, sagaScenario.task!)
-          return [{
-            ...forkEffect,
-            FORK: {
-              ...forkEffect.FORK,
-              args: [...forkEffect.FORK.args, ...sagaScenario.args],
+          return [
+            {
+              ...forkEffect,
+              payload: {
+                args: [...forkEffect.payload.args, ...sagaScenario.args],
+              },
+              type: effectTypes.FORK,
             },
-          }]
+          ]
         }
       }
 
@@ -183,7 +184,7 @@ export const buildSagaScenario: BuildSagaScenario = () => {
       const take = sagaIterator.next()
       effects.push(take.value)
 
-      const taskToIterate = task ? task : (take.value as ForkEffect).FORK.args[1] as Task<T>
+      const taskToIterate = task ? task : ((take.value as ForkEffect).payload.args[1] as Task<T>)
       const stepstoIterate = task ? steps : steps.slice(1)
       const taskIiterator = taskToIterate(...args, action)
       stepstoIterate.forEach(step => {

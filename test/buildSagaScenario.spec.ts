@@ -1,5 +1,5 @@
 import { Action } from "redux"
-import { call, CallEffect, ForkEffect, put, PutEffect, takeEvery } from "redux-saga/effects"
+import { call, CallEffect, effectTypes, ForkEffect, put, PutEffect, takeEvery } from "redux-saga/effects"
 import { buildSagaScenario } from "../src"
 
 describe("buildSagaScenario.build()", () => {
@@ -62,11 +62,13 @@ describe("buildSagaScenario.build()", () => {
 
     const forkEffect = {
       ["@@redux-saga/IO"]: true,
-      FORK: {
+      combinator: false,
+      payload: {
         args: [action.type, task, arg1, arg2],
         context: null,
-        fn: (sagaOutput.effects[0] as any).FORK.fn,
+        fn: (sagaOutput.effects[0] as any).payload.fn,
       },
+      type: effectTypes.FORK,
     }
     const expectedScenarioOutput = {
       effects: [forkEffect, effect1, effect2, effect3],
@@ -82,14 +84,14 @@ describe("buildSagaScenario.run()", () => {
   }
   type SagaEffects = CallEffect | PutEffect<SagaAction>
   const subscribedAction: SagaAction = { type: "some-type", payload: 1 }
-  const arg1 = () => ({ arg1: true } as any)
+  const arg1 = (a: number) => ({ arg1: true } as any)
   const buildArg2 = (f: () => number) => () => ({ type: "arg2", payload: f() } as SagaAction)
   const arg2 = buildArg2(() => 3)
 
   const okAction = { type: "ok-type", payload: 10 }
   const failAction = { type: "fail-type", payload: 20 }
   const errorAction = { type: "error-type", payload: 30 }
-  function* testSagaTask(arg11: () => boolean, arg22: () => SagaAction, action: SagaAction): IterableIterator<SagaEffects> {
+  function* testSagaTask(arg11: (a: number) => boolean, arg22: () => SagaAction, action: SagaAction): IterableIterator<SagaEffects> {
     try {
       const result: boolean = yield call(arg11, action.payload)
       if (result) {
@@ -99,7 +101,7 @@ describe("buildSagaScenario.run()", () => {
       }
       yield put(arg22())
     } catch (error) {
-       yield put(errorAction)
+      yield put(errorAction)
     }
   }
 
