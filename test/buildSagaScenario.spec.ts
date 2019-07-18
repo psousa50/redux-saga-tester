@@ -86,8 +86,9 @@ describe("buildSagaScenario.run()", () => {
   const buildArg2 = (f: () => number) => () => ({ type: "arg2", payload: f() } as SagaAction)
   const arg2 = buildArg2(() => 3)
 
-  const okAction = { type: "ok-type", payload: 2 }
-  const failAction = { type: "fail-type", payload: 10 }
+  const okAction = { type: "ok-type", payload: 10 }
+  const failAction = { type: "fail-type", payload: 20 }
+  const errorAction = { type: "error-type", payload: 30 }
   function* testSagaTask(arg11: () => boolean, arg22: () => SagaAction, action: SagaAction): IterableIterator<SagaEffects> {
     try {
       const result: boolean = yield call(arg11, action.payload)
@@ -98,7 +99,7 @@ describe("buildSagaScenario.run()", () => {
       }
       yield put(arg22())
     } catch (error) {
-      // yield put(errorAction)
+       yield put(errorAction)
     }
   }
 
@@ -137,7 +138,7 @@ describe("buildSagaScenario.run()", () => {
       const errorMessage = "some-error"
       const sagaScenario = getSagaScenario()
         .throws(new Error(errorMessage))
-        .starved(false)
+        .generateEffect(put(errorAction))
 
       expect(sagaScenario.run()).toEqual(sagaScenario.output())
     })
