@@ -120,7 +120,7 @@ export const buildSagaScenario: BuildSagaScenario = () => {
     const generateEffect: GenerateEffect = effect => {
       const o = addStep({ effect })
       return {
-        ...efectOperations(addStep({ effect })),
+        ...efectOperations(o),
         returns: o.returns,
         throws: o.throws,
       }
